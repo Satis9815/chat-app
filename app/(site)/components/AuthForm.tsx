@@ -5,6 +5,7 @@ import React, { useCallback, useState } from 'react';
 import { FieldValues, SubmitHandler, useForm } from 'react-hook-form';
 import AuthSocialButton from './AuthSocialButton';
 import { BsGithub, BsGoogle } from 'react-icons/bs';
+import axios from 'axios';
 
 type Variant = 'LOGIN' | 'REGISTER';
 export default function AuthForm() {
@@ -34,12 +35,15 @@ export default function AuthForm() {
   const submitForm: SubmitHandler<FieldValues> = (data) => {
     setIsLoading(true);
 
-    if (variant === 'LOGIN') {
-      //Axios Register
-    }
     if (variant === 'REGISTER') {
-      // NextAuth SignIn
+      //Axios Register
+      axios.post("/api/register",data);
     }
+
+    if (variant === 'LOGIN') {
+      // NextAuth SignIn 
+    }
+ 
   };
   const socialAction = (action: string) => {
     setIsLoading(true);
