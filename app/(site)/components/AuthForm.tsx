@@ -1,16 +1,19 @@
 'use client';
 import Button from '@/app/components/Button';
 import Input from '@/app/components/Input/Input';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FieldValues, SubmitHandler, useForm } from 'react-hook-form';
 import AuthSocialButton from './AuthSocialButton';
 import { BsGithub, BsGoogle } from 'react-icons/bs';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import {signIn } from 'next-auth/react'
+import {signIn, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation';
 
 type Variant = 'LOGIN' | 'REGISTER';
 export default function AuthForm() {
+  const session =  useSession();
+  const router = useRouter();
   const [variant, setVariant] = useState<Variant>('LOGIN');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,6 +24,14 @@ export default function AuthForm() {
       setVariant('LOGIN');
     }
   }, [variant]);
+
+  useEffect(()=>{
+    if(session?.status === "authenticated"){
+      console.log("Authenticated"); 
+      router.push("/users");
+    }
+
+  },[session?.status,router]);
 
   const {
     register,
@@ -34,16 +45,23 @@ export default function AuthForm() {
     },
   });
 
+
+
   const submitForm: SubmitHandler<FieldValues> = (data) => {
     setIsLoading(true);
 
     if (variant === 'REGISTER') {
       //Axios Register
-      axios.post("/api/register",data).then((res)=>toast.success("Success")).catch(()=>toast.error("Something wend wrong!")).finally(()=>setIsLoading(false));
+      axios.post("/api/register",data).then((res:any)=> {
+
+      toast.success("Success")
+      router.push("/users");
+    }
+
+      ).catch(()=>toast.error("Something wend wrong!")).finally(()=>setIsLoading(false));
     }
 
     if (variant === 'LOGIN') {
-      console.log(data);
       signIn("credentials",{
         ...data,
         redirect:false
@@ -54,6 +72,7 @@ export default function AuthForm() {
         }
         if(callback?.ok && !callback?.error){
           toast.success("Logged In!");
+          router.push("/users");
         }
       })
       .finally(()=>setIsLoading(false))
@@ -63,7 +82,15 @@ export default function AuthForm() {
   const socialAction = (action: string) => {
     setIsLoading(true);
 
-    //Next Social signin
+    signIn(action,{redirect:false}).then((callback)=>{
+      if(callback?.error){
+        toast.error("Invalid Credentials");
+
+      }
+      if(callback?.ok && !callback?.error){
+        toast.success("Logged In!");
+      }
+    }).finally(()=>setIsLoading(false))
   };
   return (
     <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
